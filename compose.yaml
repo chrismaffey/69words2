@@ -5,6 +5,8 @@ services:
     command: ["httpd", "-f", "-p", "8080", "-h", "/www"]
     ports:
       - "8081:8080"
+    expose:
+      - "8080"
     volumes:
       - ./public_html:/www:ro
     read_only: true
