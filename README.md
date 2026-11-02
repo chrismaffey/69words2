@@ -9,7 +9,7 @@ Start the server from the project root:
 docker compose up -d
 ```
 
-Open http://localhost:8080. Edit or add files in `public_html`; changes are
+Open http://localhost:8081. Edit or add files in `public_html`; changes are
 available immediately. Compose uses the BusyBox image directly; no Dockerfile
 or image build is needed.
 
@@ -25,4 +25,9 @@ docker compose down
 ```
 
 The server runs as an unprivileged user with a read-only document root and
-container filesystem. Port 8080 is bound to the local machine only.
+container filesystem. Host port 8081 maps to port 8080 inside the container.
+
+For Dokploy, deploy `compose.yaml` alone. In Dokploy's Domains settings, select
+service `web`, set the container port to `8080`, and use path `/`. Save and
+redeploy. The host port mapping uses 8081 to avoid the existing conflict on
+host port 8080; Dokploy's domain still routes to container port 8080.
