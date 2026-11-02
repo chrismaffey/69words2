@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>69words</title>
+    <style>
+      * { box-sizing: border-box; }
+      html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; }
+      body { background: #faf9f6; color: #242424; }
+      #editor, #measure {
+        font-family: Georgia, 'Times New Roman', serif;
+        font-weight: normal;
+        line-height: 1.15;
+        letter-spacing: normal;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        word-break: normal;
+        padding: 0;
+        border: 0;
+      }
+      #editor {
+        position: absolute;
+        inset: 24px 24px 56px;
+        width: calc(100% - 48px);
+        height: calc(100% - 80px);
+        resize: none;
+        outline: none;
+        background: transparent;
+        color: inherit;
+        overflow: hidden;
+        border-radius: 0;
+      }
+      #editor::placeholder { color: #b4b0a8; }
+      #measure { position: fixed; visibility: hidden; pointer-events: none; top: 0; left: 0; }
+      #status {
+        position: fixed;
+        bottom: 18px;
+        right: 24px;
+        left: 24px;
+        text-align: right;
+        font: 13px/1.4 system-ui, sans-serif;
+        color: #77736d;
+      }
+    </style>
+  </head>
+  <body>
+    <textarea id="editor" aria-label="Write up to 69 words" aria-describedby="status"
+              placeholder="Start typing here...
+
+69 words is the worlds simplest text editor.
+
+Your precious data is stored locally, not sent back to our servers.
+
+Why make this app?  I had other plans for the domain name but this seamed more appropriate."
+              spellcheck="true" autofocus></textarea>
+    <div id="measure" aria-hidden="true"></div>
+    <output id="status" for="editor" aria-live="polite"></output>
+    <script>
+      const editor = document.querySelector('#editor');
+      const measure = document.querySelector('#measure');
+      const status = document.querySelector('#status');
+      const storageKey = '69words.text';
+      const maxWords = 69;
+      let saveFailed = false;
+
+      // A word is any run of non-whitespace characters.
+      const words = text => [...text.matchAll(/\S+/gu)];
+      function limit(text) {
+        const matches = words(text);
+        return matches.length > maxWords ? text.slice(0, matches[maxWords].index).trimEnd() : text;
+      }
+
+      function fitText() {
+        measure.style.width = `${editor.clientWidth}px`;
+        // The final zero-width character measures a trailing empty line too.
+        measure.textContent = (editor.value || editor.placeholder) + '\u200b';
+        let low = 1;
+        let high = Math.max(editor.clientWidth, editor.clientHeight);
+        while (high - low > 0.25) {
+          const size = (low + high) / 2;
+          measure.style.fontSize = `${size}px`;
+          if (measure.scrollHeight <= editor.clientHeight && measure.scrollWidth <= editor.clientWidth) {
+            low = size;
+          } else {
+            high = size;
+          }
+        }
+        editor.style.fontSize = `${low}px`;
+        editor.scrollTop = 0;
+        editor.scrollLeft = 0;
+      }
+
+      function update() {
+        const bounded = limit(editor.value);
+        if (bounded !== editor.value) {
+          const cursor = Math.min(editor.selectionStart, bounded.length);
+          editor.value = bounded;
+          editor.setSelectionRange(cursor, cursor);
+        }
+        try {
+          localStorage.setItem(storageKey, editor.value);
+          saveFailed = false;
+        } catch {
+          saveFailed = true;
+        }
+        const count = words(editor.value).length;
+        status.textContent = `${count} / ${maxWords} words${count === maxWords ? ' · Limit reached' : ''}${saveFailed ? ' · Unable to save locally' : ''}`;
+        fitText();
+      }
+
+      // Reject typed words beyond the limit without removing existing text.
+      editor.addEventListener('beforeinput', event => {
+        if (event.isComposing || event.data === null || !event.inputType.startsWith('insert')) return;
+        const next = editor.value.slice(0, editor.selectionStart) + event.data + editor.value.slice(editor.selectionEnd);
+        if (words(next).length > maxWords) event.preventDefault();
+      });
+      editor.addEventListener('input', event => { if (!event.isComposing) update(); });
+      editor.addEventListener('compositionend', update);
+      new ResizeObserver(fitText).observe(editor);
+      window.visualViewport?.addEventListener('resize', fitText);
+      try { editor.value = limit(localStorage.getItem(storageKey) || ''); } catch { /* Editing remains available. */ }
+      update();
+    </script>
+  </body>
+</html>
