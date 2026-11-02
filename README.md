@@ -6,11 +6,12 @@ Docker with the Compose plugin is required.
 Start the server from the project root:
 
 ```sh
-docker compose up -d --build
+docker compose up -d
 ```
 
 Open http://localhost:8080. Edit or add files in `public_html`; changes are
-available immediately without rebuilding the image.
+available immediately. Compose uses the BusyBox image directly; no Dockerfile
+or image build is needed.
 
 The page is a full-window text editor limited to 69 whitespace-separated words.
 Text resizes to fit the window and saves automatically in the browser's local

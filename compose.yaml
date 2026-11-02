@@ -1,6 +1,8 @@
 services:
   web:
-    build: ./docker
+    image: busybox:1.37
+    user: "65534:65534"
+    command: ["httpd", "-f", "-p", "8080", "-h", "/www"]
     ports:
       - "127.0.0.1:8080:8080"
     volumes:
